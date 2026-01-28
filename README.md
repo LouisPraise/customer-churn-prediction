@@ -17,7 +17,7 @@ I developed a complete machine learning pipeline, moving from raw data explorati
 * **Cloud:** GitHub, Streamlit Cloud
 
 ### ⚙️ Installation
-1. Clone: `git clone https://github.com`
+1. Clone: `git clone https://github.com/LouisPraise/customer-churn-prediction.git`
 2. Install: `pip install -r requirements.txt`
 3. Run: `streamlit run app.py`
 
