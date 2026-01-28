@@ -22,14 +22,16 @@ preprocessor = ColumnTransformer(
     remainder='passthrough' 
 )
 
-# 3. On "entraîne" le preprocessor avec ton fichier CSV
 @st.cache_resource
 def get_preprocessor():
-    # Charge le dataset (assure-toi que le CSV est dans ton dossier GitHub)
     df = pd.read_csv("WA_Fn-UseC_-Telco-Customer-Churn.csv")
-    X = df.drop(['customerID', 'Churn'], axis=1)
-    X['TotalCharges'] = pd.to_numeric(X['TotalCharges'], errors='coerce').fillna(0)
-    preprocessor.fit(X)
+    
+    # 1. Nettoyage identique au Notebook
+    df = df.drop(['customerID', 'Churn'], axis=1)
+    df['TotalCharges'] = pd.to_numeric(df['TotalCharges'], errors='coerce').fillna(0)
+    
+    # 2. On entraîne le preprocessor
+    preprocessor.fit(df) # On fit sur le dataframe complet sans Churn
     return preprocessor
 
 trained_preprocessor = get_preprocessor()
@@ -73,47 +75,61 @@ PaymentMethod = st.selectbox(
 tenure = st.number_input("Tenure (months)", min_value=0, max_value=72, value=12)
 MonthlyCharges = st.number_input("Monthly Charges", min_value=0.0, max_value=200.0, value=50.0)
 TotalCharges = st.number_input("Total Charges", min_value=0.0, max_value=10000.0, value=500.0)
-
-# Prediction
+   
+    
 if st.button("🔮 Predict Churn"):
 
-    input_data = pd.DataFrame({
-        "gender": [gender],
-        "SeniorCitizen": [SeniorCitizen],
-        "Partner": [Partner],
-        "Dependents": [Dependents],
-        "tenure": [tenure],
-        "PhoneService": [PhoneService],
-        "MultipleLines": [MultipleLines],
-        "InternetService": [InternetService],
-        "OnlineSecurity": [OnlineSecurity],
-        "OnlineBackup": [OnlineBackup],
-        "DeviceProtection": [DeviceProtection],
-        "TechSupport": [TechSupport],
-        "StreamingTV": [StreamingTV],
-        "StreamingMovies": [StreamingMovies],
-        "Contract": [Contract],
-        "PaperlessBilling": [PaperlessBilling],
-        "PaymentMethod": [PaymentMethod],
-        "MonthlyCharges": [MonthlyCharges],
-        "TotalCharges": [TotalCharges]
-    })
+    # 1. On crée le dictionnaire avec les noms exacts du .info()
+    data_dict = {
+        "gender": gender,
+        "SeniorCitizen": SeniorCitizen,
+        "Partner": Partner,
+        "Dependents": Dependents,
+        "tenure": tenure,
+        "PhoneService": PhoneService,
+        "MultipleLines": MultipleLines,
+        "InternetService": InternetService,
+        "OnlineSecurity": OnlineSecurity,
+        "OnlineBackup": OnlineBackup,
+        "DeviceProtection": DeviceProtection,
+        "TechSupport": TechSupport,
+        "StreamingTV": StreamingTV,
+        "StreamingMovies": StreamingMovies,
+        "Contract": Contract,
+        "PaperlessBilling": PaperlessBilling,
+        "PaymentMethod": PaymentMethod,
+        "MonthlyCharges": MonthlyCharges,
+        "TotalCharges": TotalCharges
+    }
  
-    # Transformation
-    input_processed = trained_preprocessor.transform(input_data)
+    # 2. On transforme en DataFrame
+    input_df = pd.DataFrame([data_dict])
 
-    # Prediction ET Probabilité
+    # 3. On force l'ordre EXACT du dataset d'entraînement
+    column_order = [
+        "gender", "SeniorCitizen", "Partner", "Dependents", "tenure", 
+        "PhoneService", "MultipleLines", "InternetService", "OnlineSecurity", 
+        "OnlineBackup", "DeviceProtection", "TechSupport", "StreamingTV", 
+        "StreamingMovies", "Contract", "PaperlessBilling", "PaymentMethod", 
+        "MonthlyCharges", "TotalCharges"
+    ]
+    
+    input_df = input_df[column_order]
+
+    # 4. Transformation et Prédiction
+    input_processed = trained_preprocessor.transform(input_df)
+    
+    # Debug pour vérifier que les dimensions collent enfin (ex: 1, 31)
+    # st.write(f"Format après transformation : {input_processed.shape}")
+
     prediction = model.predict(input_processed)
-    probability = model.predict_proba(input_processed)[0][1] 
+    probability = model.predict_proba(input_processed)[0][1]
 
     if prediction[0] == 1:
         st.error(f"⚠️ High risk of churn (Probability: {probability:.2%})")
     else:
         st.success(f"✅ Likely to stay (Churn probability: {probability:.2%})")
 
-    
-   
-    
 
 
 
