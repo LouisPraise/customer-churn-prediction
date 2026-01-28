@@ -22,4 +22,4 @@ I developed a complete machine learning pipeline, moving from raw data explorati
 3. Run: `streamlit run app.py`
 
 ---
-🔗 **[LIVE DEMO LINK](https://ton-lien.streamlit.app)**
+🔗 **[LIVE DEMO LINK](https://customer-churn-prediction-louis-dieme.streamlit.app/)**
