@@ -12,11 +12,14 @@ model = joblib.load("rf_model_final.pkl")
 Yes_No_Col = ['gender', 'Partner', 'Dependents', 'PhoneService', 'MultipleLines', 
               'OnlineSecurity', 'OnlineBackup', 'DeviceProtection', 'TechSupport', 
               'StreamingTV', 'StreamingMovies', 'PaperlessBilling','InternetService',
-              'Contract','PaymentMethod']
+              'Contract','PaymentMethod', 'SeniorCitizen'] 
+
+# On définit l'encodeur séparément pour plus de contrôle
+encoder = OneHotEncoder(drop='first', handle_unknown='ignore', sparse_output=False)
 
 preprocessor = ColumnTransformer(
     transformers=[
-        ('cat', OneHotEncoder(drop='first', handle_unknown='ignore', sparse_output=False), Yes_No_Col),
+        ('cat', encoder, Yes_No_Col),
         ('num', MinMaxScaler(), ['tenure', 'MonthlyCharges', 'TotalCharges'])
     ], 
     remainder='passthrough' 
@@ -25,13 +28,13 @@ preprocessor = ColumnTransformer(
 @st.cache_resource
 def get_preprocessor():
     df = pd.read_csv("WA_Fn-UseC_-Telco-Customer-Churn.csv")
+    # Nettoyage strict
+    X = df.drop(['customerID', 'Churn'], axis=1)
+    X['TotalCharges'] = pd.to_numeric(X['TotalCharges'], errors='coerce').fillna(0)
     
-    # 1. Nettoyage identique au Notebook
-    df = df.drop(['customerID', 'Churn'], axis=1)
-    df['TotalCharges'] = pd.to_numeric(df['TotalCharges'], errors='coerce').fillna(0)
-    
-    # 2. On entraîne le preprocessor
-    preprocessor.fit(df) # On fit sur le dataframe complet sans Churn
+    # On entraîne le preprocessor sur TOUT le dataset original
+    # Cela garantit que toutes les colonnes OneHot (30 ou 31) sont créées
+    preprocessor.fit(X)
     return preprocessor
 
 trained_preprocessor = get_preprocessor()
@@ -121,14 +124,21 @@ if st.button("🔮 Predict Churn"):
     
     # Debug pour vérifier que les dimensions collent enfin (ex: 1, 31)
     # st.write(f"Format après transformation : {input_processed.shape}")
+    # Lignes de diagnostic temporaires
+    st.write(f"📊 Le modèle attend {model.n_features_in_} colonnes.")
+    st.write(f"⚙️ Le preprocessor en a généré {input_processed.shape[1]}.")
 
     prediction = model.predict(input_processed)
-    probability = model.predict_proba(input_processed)[0][1]
+    # Bonne syntaxe pour la probabilité
+    prob_array = model.predict_proba(input_processed)
+    probability = prob_array[0][1]
 
     if prediction[0] == 1:
         st.error(f"⚠️ High risk of churn (Probability: {probability:.2%})")
     else:
         st.success(f"✅ Likely to stay (Churn probability: {probability:.2%})")
+
+
 
 
 
