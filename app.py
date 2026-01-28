@@ -78,67 +78,59 @@ PaymentMethod = st.selectbox(
 tenure = st.number_input("Tenure (months)", min_value=0, max_value=72, value=12)
 MonthlyCharges = st.number_input("Monthly Charges", min_value=0.0, max_value=200.0, value=50.0)
 TotalCharges = st.number_input("Total Charges", min_value=0.0, max_value=10000.0, value=500.0)
-   
-    
+
+
 if st.button("🔮 Predict Churn"):
 
-    # 1. On crée le dictionnaire avec les noms exacts du .info()
+    # 1. Création du dictionnaire de données (Ordre identique au CSV)
     data_dict = {
-        "gender": gender,
-        "SeniorCitizen": SeniorCitizen,
-        "Partner": Partner,
-        "Dependents": Dependents,
-        "tenure": tenure,
-        "PhoneService": PhoneService,
-        "MultipleLines": MultipleLines,
-        "InternetService": InternetService,
-        "OnlineSecurity": OnlineSecurity,
-        "OnlineBackup": OnlineBackup,
-        "DeviceProtection": DeviceProtection,
-        "TechSupport": TechSupport,
-        "StreamingTV": StreamingTV,
-        "StreamingMovies": StreamingMovies,
-        "Contract": Contract,
-        "PaperlessBilling": PaperlessBilling,
-        "PaymentMethod": PaymentMethod,
-        "MonthlyCharges": MonthlyCharges,
+        "gender": gender, "SeniorCitizen": SeniorCitizen, "Partner": Partner, 
+        "Dependents": Dependents, "tenure": tenure, "PhoneService": PhoneService, 
+        "MultipleLines": MultipleLines, "InternetService": InternetService, 
+        "OnlineSecurity": OnlineSecurity, "OnlineBackup": OnlineBackup, 
+        "DeviceProtection": DeviceProtection, "TechSupport": TechSupport, 
+        "StreamingTV": StreamingTV, "StreamingMovies": StreamingMovies, 
+        "Contract": Contract, "PaperlessBilling": PaperlessBilling, 
+        "PaymentMethod": PaymentMethod, "MonthlyCharges": MonthlyCharges, 
         "TotalCharges": TotalCharges
     }
  
-    # 2. On transforme en DataFrame
     input_df = pd.DataFrame([data_dict])
 
-    # 3. On force l'ordre EXACT du dataset d'entraînement
-    column_order = [
-        "gender", "SeniorCitizen", "Partner", "Dependents", "tenure", 
-        "PhoneService", "MultipleLines", "InternetService", "OnlineSecurity", 
-        "OnlineBackup", "DeviceProtection", "TechSupport", "StreamingTV", 
-        "StreamingMovies", "Contract", "PaperlessBilling", "PaymentMethod", 
-        "MonthlyCharges", "TotalCharges"
+    # 2. Transformation via le preprocessor
+    # On transforme le résultat directement en DataFrame pour filtrer les colonnes
+    input_processed_df = pd.DataFrame(
+        trained_preprocessor.transform(input_df), 
+        columns=trained_preprocessor.get_feature_names_out()
+    )
+    
+    # 3. FILTRE MAGIQUE : On ne garde QUE tes 23 colonnes exactes
+    cols_23 = [
+        'cat__gender_Male', 'cat__Partner_Yes', 'cat__Dependents_Yes', 
+        'cat__PhoneService_Yes', 'cat__MultipleLines_Yes', 'cat__OnlineSecurity_Yes', 
+        'cat__OnlineBackup_Yes', 'cat__DeviceProtection_Yes', 'cat__TechSupport_Yes', 
+        'cat__StreamingTV_Yes', 'cat__StreamingMovies_Yes', 'cat__PaperlessBilling_Yes', 
+        'cat__InternetService_Fiber optic', 'cat__InternetService_No', 
+        'cat__Contract_One year', 'cat__Contract_Two year', 
+        'cat__PaymentMethod_Credit card (automatic)', 'cat__PaymentMethod_Electronic check', 
+        'cat__PaymentMethod_Mailed check', 'cat__SeniorCitizen_1', 
+        'num__tenure', 'num__MonthlyCharges', 'num__TotalCharges'
     ]
     
-    input_df = input_df[column_order]
+    final_input = input_processed_df[cols_23]
 
-    # 4. Transformation et Prédiction
-    input_processed = trained_preprocessor.transform(input_df)
-    
-    # Debug pour vérifier que les dimensions collent enfin (ex: 1, 31)
-    # st.write(f"Format après transformation : {input_processed.shape}")
-    # Lignes de diagnostic temporaires
-    st.write(f"📊 Le modèle attend {model.n_features_in_} colonnes.")
-    st.write(f"⚙️ Le preprocessor en a généré {input_processed.shape[1]}.")
+    # 4. Affichage du diagnostic (pour confirmer le 23 vs 23)
+    st.write(f"📊 Modèle : {model.n_features_in_} | ⚙️ App : {final_input.shape[1]}")
 
-    prediction = model.predict(input_processed)
-    # Bonne syntaxe pour la probabilité
-    prob_array = model.predict_proba(input_processed)
+    # 5. Prédiction
+    prediction = model.predict(final_input)
+    prob_array = model.predict_proba(final_input)
     probability = prob_array[0][1]
 
     if prediction[0] == 1:
-        st.error(f"⚠️ High risk of churn (Probability: {probability:.2%})")
+        st.error(f"⚠️ High risk of churn ({probability:.2%})")
     else:
-        st.success(f"✅ Likely to stay (Churn probability: {probability:.2%})")
-
-
+        st.success(f"✅ Loyal Customer ({probability:.2%})")
 
 
 
