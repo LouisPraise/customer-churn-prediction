@@ -7,7 +7,32 @@ from sklearn.compose import ColumnTransformer
 from sklearn.preprocessing import OneHotEncoder, MinMaxScaler
 
 # Load my files
-pipeline = joblib.load("full_churn_pipeline.pkl")
+model = joblib.load("rf_model_final.pkl")
+
+Yes_No_Col = ['gender', 'Partner', 'Dependents', 'PhoneService', 'MultipleLines', 
+              'OnlineSecurity', 'OnlineBackup', 'DeviceProtection', 'TechSupport', 
+              'StreamingTV', 'StreamingMovies', 'PaperlessBilling','InternetService',
+              'Contract','PaymentMethod']
+
+preprocessor = ColumnTransformer(
+    transformers=[
+        ('cat', OneHotEncoder(drop='first', handle_unknown='ignore', sparse_output=False), Yes_No_Col),
+        ('num', MinMaxScaler(), ['tenure', 'MonthlyCharges', 'TotalCharges'])
+    ], 
+    remainder='passthrough' 
+)
+
+# 3. On "entraîne" le preprocessor avec ton fichier CSV
+@st.cache_resource
+def get_preprocessor():
+    # Charge le dataset (assure-toi que le CSV est dans ton dossier GitHub)
+    df = pd.read_csv("WA_Fn-UseC_-Telco-Customer-Churn.csv")
+    X = df.drop(['customerID', 'Churn'], axis=1)
+    X['TotalCharges'] = pd.to_numeric(X['TotalCharges'], errors='coerce').fillna(0)
+    preprocessor.fit(X)
+    return preprocessor
+
+trained_preprocessor = get_preprocessor()
 
 st.title("📊 Customer Churn Prediction App")
 st.write("Please enter the customer information below 👇")
@@ -49,9 +74,7 @@ tenure = st.number_input("Tenure (months)", min_value=0, max_value=72, value=12)
 MonthlyCharges = st.number_input("Monthly Charges", min_value=0.0, max_value=200.0, value=50.0)
 TotalCharges = st.number_input("Total Charges", min_value=0.0, max_value=10000.0, value=500.0)
 
-
 # Prediction
-
 if st.button("🔮 Predict Churn"):
 
     input_data = pd.DataFrame({
@@ -76,13 +99,21 @@ if st.button("🔮 Predict Churn"):
         "TotalCharges": [TotalCharges]
     })
  
-    prediction = pipeline.predict(input_data)
-    probability = pipeline.predict_proba(input_data)[0][1]
+    # Transformation
+    input_processed = trained_preprocessor.transform(input_data)
+
+    # Prediction ET Probabilité
+    prediction = model.predict(input_processed)
+    probability = model.predict_proba(input_processed)[0][1] 
 
     if prediction[0] == 1:
-        st.error(f"⚠️ High risk of churn ({probability:.2%})")
+        st.error(f"⚠️ High risk of churn (Probability: {probability:.2%})")
     else:
-        st.success(f"✅ Likely to stay ({probability:.2%})")
+        st.success(f"✅ Likely to stay (Churn probability: {probability:.2%})")
+
+    
+   
+    
 
 
 
