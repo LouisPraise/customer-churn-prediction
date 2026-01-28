@@ -7,8 +7,7 @@ from sklearn.compose import ColumnTransformer
 from sklearn.preprocessing import OneHotEncoder, MinMaxScaler
 
 # Load my files
-preprocessor = joblib.load("preprocessor.pkl")
-model = joblib.load("Churn_Prediction_Project.pkl")
+pipeline = joblib.load("full_churn_pipeline.pkl")
 
 st.title("📊 Customer Churn Prediction App")
 st.write("Please enter the customer information below 👇")
@@ -48,7 +47,7 @@ PaymentMethod = st.selectbox(
 
 tenure = st.number_input("Tenure (months)", min_value=0, max_value=72, value=12)
 MonthlyCharges = st.number_input("Monthly Charges", min_value=0.0, max_value=200.0, value=50.0)
-TotalCharges = st.text_input("Total Charges", "500")
+TotalCharges = st.number_input("Total Charges", min_value=0.0, max_value=10000.0, value=500.0)
 
 
 # Prediction
@@ -76,24 +75,14 @@ if st.button("🔮 Predict Churn"):
         "MonthlyCharges": [MonthlyCharges],
         "TotalCharges": [TotalCharges]
     })
-
-    # Data preprocessing
-    input_processed = preprocessor.transform(input_data)
-
-    # Prediction
-    prediction = model.predict(input_processed)
-    probability = model.predict_proba(input_processed)[0][1]
+ 
+    prediction = pipeline.predict(input_data)
+    probability = pipeline.predict_proba(input_data)[0][1]
 
     if prediction[0] == 1:
-        st.error(f"⚠️ High risk of churn (probability = {probability:.2f})")
+        st.error(f"⚠️ High risk of churn ({probability:.2%})")
     else:
-        st.success(f"✅ Customer likely to stay (churn probability = {probability:.2f})")
+        st.success(f"✅ Likely to stay ({probability:.2%})")
 
-st.write("App started")
-st.write("Loading preprocessor...")
-preprocessor = joblib.load("preprocessor.pkl")
-st.write("Preprocessor OK")
 
-st.write("Loading model...")
-model = joblib.load("Churn_Prediction_Project.pkl")
-st.write("Model OK")
+
