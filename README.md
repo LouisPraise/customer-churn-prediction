@@ -9,7 +9,7 @@ Production-Ready Deployment: Developed an interactive web interface using Stream
 Technical Problem Solving: Successfully resolved complex MLOps challenges, including Python environment versioning (3.13 compatibility), object serialization with joblib, and feature dimension synchronization (23-feature alignment).
 🛠️ Tech Stack
 Languages & Libraries: Python, Pandas, NumPy, Scikit-Learn, TensorFlow.
-Data Visualization: Matplotlib
+Data Visualization: Matplotlib, Seaborn.
 Deployment & MLOps: Streamlit, Joblib, GitHub.
 ⚙️ Installation & Usage
 Clone the repo: git clone https://github.com
@@ -20,4 +20,3 @@ Metric	Score
 Accuracy	80%
 F1-Score (Class 1)	[Ton Score, ex: 0.58]
 Recall (Class 1)	[Ton Score, ex: 0.55]
-🔗 Live Demo Link
