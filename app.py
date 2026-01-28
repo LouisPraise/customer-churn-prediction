@@ -1,6 +1,10 @@
+
 import streamlit as st
 import joblib
 import pandas as pd
+import numpy as np
+from sklearn.compose import ColumnTransformer 
+from sklearn.preprocessing import OneHotEncoder, MinMaxScaler
 
 # Load my files
 preprocessor = joblib.load("preprocessor.pkl")
@@ -84,3 +88,12 @@ if st.button("🔮 Predict Churn"):
         st.error(f"⚠️ High risk of churn (probability = {probability:.2f})")
     else:
         st.success(f"✅ Customer likely to stay (churn probability = {probability:.2f})")
+
+st.write("App started")
+st.write("Loading preprocessor...")
+preprocessor = joblib.load("preprocessor.pkl")
+st.write("Preprocessor OK")
+
+st.write("Loading model...")
+model = joblib.load("Churn_Prediction_Project.pkl")
+st.write("Model OK")
